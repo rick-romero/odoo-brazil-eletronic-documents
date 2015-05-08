@@ -1,4 +1,4 @@
-[]-Relacionar código do produto interno com o código do fornecedor;
+[ ]-Relacionar código do produto interno com o código do fornecedor;
 
-[]-Buscar produtos pelo código no Fornecedor também;
+[ ]-Buscar produtos pelo código no Fornecedor também;
 
