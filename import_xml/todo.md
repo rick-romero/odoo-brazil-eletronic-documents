@@ -2,6 +2,8 @@
 
 [ ]-Ler todos os XML da Pasta (Configurada na Empresa) e importar;
 
+[ ]-Criar menu para importar Todos os xmls;
+
 [ ]-Mover o xml para pasta de Importados (Caminho XML/Importados);
 
 [ ]-Relacionar código do produto interno com o código do fornecedor;
