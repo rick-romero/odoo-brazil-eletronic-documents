@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    Copyright (C) 2011 Enapps LTD (<http://www.enapps.co.uk>).
+#    Copyright (C) 2015 Carlos Silveira.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -148,7 +148,7 @@ class import_xml(models.Model):
             vals_p = {'name': vals.get('name'),
                 'type': 'product',
                 'company_id': None,
-                'cost_method': 'real',
+                'cost_method': 'average',
                 'valuation': 'real_time',
                 'categ_id': vals.get('categ_id'),
                 'pos_categ_id': vals.get('pos_categ_id'),
