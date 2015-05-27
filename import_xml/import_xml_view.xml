@@ -50,16 +50,20 @@
                         <field name="state" widget="statusbar" statusbar_visible="open,done" statusbar_colors='{"pending":"blue"}' readonly="1" />
                     </header>
                     <sheet>
-                        <label string="Informar dados da NF a importar."/>
-                        <p />
-                        <field name="name" colspan="2"/>
-                        <field name="company_id"/>
-                        <field name="location_id"/>
-                        <field name="categ_id"/>
-                        <field name="pos_categ_id"/>
-                        <field name="input_file" colspan="2"/>
-                        <field name="user_id" colspan="2" invisible="1"/>
-                        <button string="Importar" type="object" name="import_to_db" icon="terp-stock_effects-object-colorize" colspan="2"/>
+                    	<div class="oe_title">
+                        	<h1>
+                            	<label string="Informar dados da NF-e a importar"/>
+                            </h1>
+                        </div>
+                    	<group>                        	
+	                        <field name="name" colspan="2"/>
+	                        <field name="company_id"/>
+	                        <field name="location_id"/>
+	                        <field name="categ_id"/>	                        
+	                        <field name="input_file" colspan="2"/>
+	                        <field name="user_id" colspan="2" invisible="1"/>
+	                        <button string="Importar" type="object" name="import_to_db" icon="terp-stock_effects-object-colorize" colspan="2"/>
+                       	</group>
                     </sheet>
                 </form>
             </field>
@@ -72,9 +76,10 @@
             <field name="view_type">form</field>
             <field name="view_id" ref="import_xml_view_event_form"/>
 	    <field name="target">current</field>
-        </record>        
-
-
-        <menuitem name="Importar XML" id="import_xml_menu" parent="base.menu_purchase_root" action="import_xml_event_action"/>
+        </record>
+		
+        <menuitem name="NF-e" id="import_xml_nfe_menu" parent="base.menu_purchase_root" />
+        <menuitem name="Importar XML" id="import_xml_menu" parent="import_xml_nfe_menu" action="import_xml_event_action"/>
+        
     </data>
 </openerp>

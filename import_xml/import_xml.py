@@ -18,7 +18,7 @@
 #
 ##############################################################################
 import re
-from openerp import models, fields, api, _
+from openerp import models, fields, api, _, exceptions
 #from openerp.osv import fields, osv
 import base64
 from openerp.tools.translate import _
@@ -42,7 +42,7 @@ class import_xml(models.Model):
     location_id = fields.Many2one('stock.location', 'Destination', required=True, domain=[('usage','<>','view')])
     company_id = fields.Many2one('res.company', 'Company', required=True, select=1, states={'confirmed': [('readonly', True)], 'approved': [('readonly', True)]})
     categ_id = fields.Many2one('product.category','Internal Category', required=True, change_default=True, domain="[('type','=','normal')]" ,help="S     elect category for the current product")
-    pos_categ_id = fields.Many2one('pos.category','Point of Sale Category', help="Those categories are used to group similar products for point of s     ale.")
+    #pos_categ_id = fields.Many2one('pos.category','Point of Sale Category', help="Those categories are used to group similar products for point of s     ale.")
     state = fields.Selection(_TASK_STATE, 'Situacao', required=True)
 
 
@@ -182,10 +182,14 @@ class import_xml(models.Model):
             types = type_obj.search(cr, uid, [('code', '=', 'incoming'), ('warehouse_id', '=', False)], context=context)
             if not types:
                 raise Warning(_('Error! Make sure you have at least an incoming picking type defined'))
-
-        nfe = str(uid)
+        
         context['result_ids'] = []
-        #result_pool = self.pool.get('ea_import.chain.result')
+
+        def get_element(xmldoc, tag):
+            elemento = xmldoc.getElementsByTagName(tag)
+            if not elemento:
+                raise exceptions.Warning(_('O elemento {0} não existe no xml enviado'.format(tag)))
+                
         for chain in self.browse(cr, uid, ids, context=context):
             file_path = tempfile.gettempdir()+'/file.xml'
             data = chain.input_file
@@ -194,7 +198,7 @@ class import_xml(models.Model):
             f.close()
 
             xmldoc = minidom.parse(file_path)
-            NFe = xmldoc.getElementsByTagName("NFe")[0]
+            NFe = get_element(xmldoc, "NFe")[0]
             infNFe = NFe.getElementsByTagName("infNFe")[0]
 
             ide = infNFe.getElementsByTagName("ide")[0]
