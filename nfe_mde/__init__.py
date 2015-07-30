@@ -20,3 +20,4 @@ import nfe_schedule
 import service
 import res_company
 import nfe_mde
+import tests

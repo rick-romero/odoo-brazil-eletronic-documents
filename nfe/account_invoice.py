@@ -74,6 +74,7 @@ class AccountInvoice(orm.Model):
 
             for nfe in nfes:
                 # erro = nfe_obj.validation(nfe['nfe'])
+                print nfe['nfe']
                 erro = XMLValidator.validation(nfe['nfe'], nfe_obj)
                 nfe_key = nfe['key'][3:]
                 if erro:
