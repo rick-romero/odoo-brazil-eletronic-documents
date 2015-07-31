@@ -222,7 +222,7 @@ class AccountInvoice(orm.Model):
                                 # 'file_returned': processo.arquivos[1]['arquivo'] if len(processo.arquivos) > 0 else '',
                                 'message': processo.resposta.xMotivo.valor,
                                 'state': 'done',
-                                'document_event_ids': inv.id}
+                                'cancel_document_event_id': inv.id}
 
                     self.attach_file_event(cr, uid, [inv.id], None, 'can', 'xml', context)
                     for prot in processo.resposta.retEvento:                        
@@ -260,7 +260,7 @@ class AccountInvoice(orm.Model):
                             'file_returned': 'False',
                             'message': 'Erro desconhecido ' + e.message,
                             'state': 'done',
-                            'document_event_ids': inv.id
+                            'cancel_document_event_id': inv.id
                             }
                     results.append(vals)
                 finally:

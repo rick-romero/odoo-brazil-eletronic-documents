@@ -36,9 +36,6 @@ class L10n_brAccountInvoiceInvalidNumber(orm.Model):
             ('done', u'Autorizado Sefaz')], 'Status', required=True),
         'status': fields.char('Status', size=10, readonly=True),
         'message': fields.char('Mensagem', size=200, readonly=True),
-        'invalid_number_document_event_ids': fields.one2many(
-            'l10n_br_account.document_event', 'document_event_ids',
-            u'Eventos', states={'done':[('readonly',True)]}),
     }
 
     def attach_file_event(self, cr, uid, ids, seq, att_type, ext, context):
@@ -102,7 +99,7 @@ class L10n_brAccountInvoiceInvalidNumber(orm.Model):
                         #    'file_returned': processo.arquivos[1]['arquivo'],
                             'message': processo.resposta.infInut.xMotivo.valor,
                             'state': 'done',
-                            'document_event_ids': item.id}
+                            'invalid_number_document_event_id': item.id}
                 results.append(vals)
                            
             except Exception as e:
@@ -117,7 +114,7 @@ class L10n_brAccountInvoiceInvalidNumber(orm.Model):
                         'file_returned': 'False',
                         'message': 'Erro desconhecido ' + e.message,
                         'state': 'done',
-                        'document_event_ids': item.id
+                        'invalid_number_document_event_id': item.id
                         }
                 results.append(vals)
             finally:
