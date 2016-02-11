@@ -30,12 +30,18 @@ FIELD_STATE = {'draft': [('readonly', False)]}
 class AccountInvoice(models.Model):
     _inherit = 'account.invoice'
 
+    def _default_operation(self):
+        return self.env.user.company_id.default_operation
+
+    def _default_taxation(self):
+        return self.env.user.company_id.default_taxation
+
     operation = fields.Selection([('A', u"Sem Dedução"),
                                   ('B', u"Com dedução/Materiais"),
                                   ('C', u"Imune/Isenta de ISSQN"),
                                   ('D', u"Devolução/Simples Remessa"),
                                   ('J', u"Intermediação")], u"Operação",
-                                 default='A', readonly=True,
+                                 default=_default_operation, readonly=True,
                                  states=FIELD_STATE)
 
     taxation = fields.Selection([('C', u"Isenta de ISS"),
@@ -47,7 +53,7 @@ class AccountInvoice(models.Model):
                                  ('G', u"Tributável Fixo"),
                                  ('H', u"Tributável S.N."),
                                  ('M', u"Micro Empreendedor Individual(MEI)")],
-                                u"Tributação", default='T',
+                                u"Tributação", default=_default_taxation,
                                 readonly=True, states=FIELD_STATE)
 
     cnae_id = fields.Many2one('l10n_br_account.cnae', string=u"CNAE",

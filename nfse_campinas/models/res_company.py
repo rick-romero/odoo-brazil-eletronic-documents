@@ -1,4 +1,4 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 ###############################################################################
 #                                                                             #
 # Copyright (C) 2015 TrustCode - www.trustcode.com.br                         #
@@ -19,26 +19,26 @@
 #                                                                             #
 ###############################################################################
 
+from openerp import api, fields, models
 
-{
-    'name': 'NFS-e Campinas',
-    'summary': """Módulo que implementa o Layout da cidade de Campinas                
-                Depends: base_nfse, suds, suds_requests""",
-    'version': '8.0',
-    'category': 'Localisation',
-    'author': 'Trustcode',
-    'license': 'AGPL-3',
-    'website': 'http://www.trustcode.com.br',
-    'contributors': ['Danimar Ribeiro <danimaribeiro@gmail.com>',
-                     'Mackilem Van der Laan Soares <mack.vdl@gmail.com>'
-                     ],
-    'depends': [
-        'base_nfse'
-    ],
-    'data': [
-        'report/danfse.xml',
-        'views/account_invoice_view.xml',
-        'views/res_company_view.xml',
-    ],
-    'instalable': True
-}
+
+class ResCompany(models.Model):
+    _inherit = 'res.company'
+    
+    
+    default_operation = fields.Selection([('A', u"Sem Dedução"),
+                                  ('B', u"Com dedução/Materiais"),
+                                  ('C', u"Imune/Isenta de ISSQN"),
+                                  ('D', u"Devolução/Simples Remessa"),
+                                  ('J', u"Intermediação")], u"Operação")
+
+    default_taxation = fields.Selection([('C', u"Isenta de ISS"),
+                                 ('E', u"Não incidência no município"),
+                                 ('F', u"Imune"),
+                                 ('K', u"Exigibilidade Susp.Dec.J/Proc.A"),
+                                 ('N', u"Não Tributável"),
+                                 ('T', u"Tributável"),
+                                 ('G', u"Tributável Fixo"),
+                                 ('H', u"Tributável S.N."),
+                                 ('M', u"Micro Empreendedor Individual(MEI)")],
+                                u"Tributação")
