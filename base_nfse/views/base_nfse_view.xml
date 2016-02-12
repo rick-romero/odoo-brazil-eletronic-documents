@@ -36,15 +36,5 @@
 			</field>
 		</record>
 
-		<record model="ir.actions.act_window" id="base_nfse_tree">
-			<field name="name">NFS-e Base</field>
-			<field name="res_model">base.nfse</field>
-			<field name="type">ir.actions.act_window</field>			
-			<field name="view_mode">tree,form</field>
-			<field name="view_type">form</field>
-		</record>
-		<menuitem parent="account.menu_finance_receivables" action="base_nfse_tree"
-			id="base_nfse_menu" />
-
 	</data>
 </openerp>

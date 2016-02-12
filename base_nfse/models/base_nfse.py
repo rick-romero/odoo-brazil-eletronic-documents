@@ -25,7 +25,6 @@ import suds.client
 import suds_requests
 from uuid import uuid4
 from lxml import etree
-from ..service.nota_servico import NotaServico
 from ..service.certificate import converte_pfx_pem
 from openerp import api, fields, models
 
