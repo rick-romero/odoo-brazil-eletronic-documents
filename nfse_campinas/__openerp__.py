@@ -36,6 +36,7 @@
         'base_nfse'
     ],
     'data': [
+        'data/l10n_br_base.city.csv',
         'report/danfse.xml',
         'views/account_invoice_view.xml',
         'views/res_company_view.xml',
