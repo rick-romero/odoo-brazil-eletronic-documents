@@ -33,7 +33,8 @@
                      'Mackilem Van der Laan Soares <mack.vdl@gmail.com>'
                      ],
     'depends': [
-        'base_nfse'
+        'base_nfse',
+        'l10n_br_account_withholding'
     ],
     'data': [
         'data/l10n_br_base.city.csv',

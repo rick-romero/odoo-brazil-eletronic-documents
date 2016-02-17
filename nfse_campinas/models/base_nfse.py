@@ -214,7 +214,7 @@ class BaseNfse(models.TransientModel):
     def print_pdf(self):
         if self.city_code == '6291':  # Campinas
             return self.env['report'].get_action(
-                self, 'trust_nfse_campinas.danfse_report')
+                self, 'nfse_campinas.danfse_report')
 
     def _url_envio_nfse(self):
         if self.city_code == '6291':  # Campinas
