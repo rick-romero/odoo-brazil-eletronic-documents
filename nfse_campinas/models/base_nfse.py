@@ -27,9 +27,9 @@ from lxml import objectify
 from datetime import datetime
 from openerp import api, fields, models, tools
 
-from openerp.addons.trust_base_nfse.service.xml import render
-from openerp.addons.trust_base_nfse.service.signature import Assinatura
-from openerp.addons.trust_base_nfse.service.signxml_test import assinar
+from openerp.addons.base_nfse.service.xml import render
+from openerp.addons.base_nfse.service.signature import Assinatura
+
 
 
 class BaseNfse(models.TransientModel):
