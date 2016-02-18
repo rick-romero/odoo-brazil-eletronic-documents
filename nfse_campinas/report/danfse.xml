@@ -35,11 +35,14 @@
 					{ padding: 0 4px; }
 				</style>
 				<t t-foreach="docs" t-as="o">
-					<t t-call="report.external_layout">
 						<t t-set="inv" t-value="o.invoice_id" />
 						<div class="page">
 							<div class="row" style="border: 1px solid black;">
-								<div class="col-xs-10" style="padding:0px;text-align:center;font-size:18px;">
+								<div class="col-xs-2">
+									<img src="/nfse_campinas/static/src/img/prefeitura.jpg" alt="Logo Prefeitura Campinas" 
+										style="max-height:80px; margin-top:4px; margin-left:10px;"/>
+								</div>
+								<div class="col-xs-8" style="padding:0px;text-align:center;font-size:18px;">
 									Prefeitura Municipal de Campinas
 									<br />
 									Secretaria Municipal de Finanças
@@ -144,7 +147,7 @@
 								<span t-field="inv.comment"></span>
 							</div>
 							<div class="row"
-								style="border: 1px solid black;min-height:580px; padding:0;">
+								style="border: 1px solid black;min-height:520px; padding:0;">
 								<table style="width:100%;" border="1">
 									<thead>
 										<tr>
@@ -246,12 +249,11 @@
 								</div>
 							</div>
 							<div class="row"
-								style="border: 1px solid black;min-height:150px; padding:0 0 5px 5px;">
+								style="border: 1px solid black;min-height:100px; padding:0 0 5px 5px;">
 								<span t-field="inv.fiscal_comment"></span>
 							</div>
 						</div>
 					</t>
-				</t>
 			</t>
 		</template>
 
