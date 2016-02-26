@@ -234,11 +234,10 @@ class AccountInvoice(models.Model):
 
         if send['success']:
             self.state = 'open'
-            self.nfse_status = send['status']
+            self.nfse_status = str(send['status']) + ' - ' + send['message']
         else:
             self.state = 'nfse_exception'
-            self.nfse_status = '0 - Erro de autorização (verifique os \
-                                documentos eletrônicos para mais info)'
+            self.nfse_status = str(send['status']) + ' - ' + send['message']
 
     @api.multi
     def button_cancel(self):

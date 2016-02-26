@@ -21,8 +21,10 @@
 
 import os
 import re
+import time
 import base64
 import hashlib
+import logging
 from lxml import objectify
 from datetime import datetime
 from openerp import api, fields, models, tools
@@ -30,6 +32,8 @@ from openerp import api, fields, models, tools
 from openerp.addons.base_nfse.service.xml import render
 from openerp.addons.base_nfse.service.signature import Assinatura
 
+
+_logger = logging.getLogger(__name__)
 
 
 class BaseNfse(models.TransientModel):
@@ -39,68 +43,91 @@ class BaseNfse(models.TransientModel):
     def send_rps(self):
         self.ensure_one()
         if self.city_code == '6291':  # Campinas
-            nfse = self._get_nfse_object()
-            url = self._url_envio_nfse()
 
-            client = self._get_client(url)
-            path = os.path.dirname(os.path.dirname(__file__))
-            xml_send = render(path, 'envio_rps.xml', nfse=nfse)
+            if self.invoice_id.status_send_nfse == 'nao_enviado':
+                nfse = self._get_nfse_object()
+                url = self._url_envio_nfse()
 
-            xml_send = "<!DOCTYPE ns1:ReqEnvioLoteRPS [<!ATTLIST Lote Id ID #IMPLIED>]>" + \
-                xml_send
+                client = self._get_client(url)
+                path = os.path.dirname(os.path.dirname(__file__))
+                xml_send = render(path, 'envio_rps.xml', nfse=nfse)
 
-            pfx_path = self._save_pfx_certificate()
-            sign = Assinatura(pfx_path, self.password)
-            reference = str('#%s' % nfse['lote_id'])
-            xml_signed = sign.assina_xml(xml_send, reference)
+                xml_send = "<!DOCTYPE ns1:ReqEnvioLoteRPS [<!ATTLIST Lote Id ID #IMPLIED>]>" + \
+                    xml_send
 
-            xml_signed = xml_signed.replace("""<!DOCTYPE ns1:ReqEnvioLoteRPS [
+                pfx_path = self._save_pfx_certificate()
+                sign = Assinatura(pfx_path, self.password)
+                reference = str('#%s' % nfse['lote_id'])
+                xml_signed = sign.assina_xml(xml_send, reference)
+
+                xml_signed = xml_signed.replace("""<!DOCTYPE ns1:ReqEnvioLoteRPS [
 <!ATTLIST Lote Id ID #IMPLIED>
-]>""", "")
+]>\n""", "")
 
-            if self.invoice_id.company_id.nfe_environment == '2':
-                response = client.service.testeEnviar(xml_signed)
-            else:
-                response = client.service.testeEnviar(xml_signed)
-
-            import unicodedata
-            response = unicodedata.normalize(
-                'NFKD', response).encode(
-                'ascii', 'ignore')
-
-            status = {'status': '', 'message': '', 'files': [
-                {'name': '{0}-envio-rps.xml'.format(
-                    nfse['lista_rps'][0]['assinatura']),
-                 'data': base64.encodestring(xml_signed)},
-                {'name': '{0}-retenvio-rps.xml'.format(
-                    nfse['lista_rps'][0]['assinatura']),
-                 'data': base64.encodestring(response or '')}
-            ]}
-            if 'RetornoEnvioLoteRPS' in response:
-                response = response.replace(
-                    '<?xml version="1.0" encoding="UTF-8"?>',
-                    '')
-                resp = objectify.fromstring(response)
-                if resp['{}Cabecalho'].Sucesso:
-                    if resp['{}Cabecalho'].Assincrono == 'S':
-                        return self.check_nfse_by_lote()
+                status = {'status': '', 'message': '', 'success': False, 'files': [
+                    {'name': '{0}-envio-rps.xml'.format(
+                        nfse['lista_rps'][0]['assinatura']),
+                     'data': base64.encodestring(xml_signed)},
+                ]}
+                try:
+                    if self.invoice_id.company_id.nfe_environment == '2':
+                        response = client.service.testeEnviar(xml_signed)
                     else:
-                        status['status'] = '100'
-                        status['message'] = 'NFS-e emitida com sucesso'
+                        response = client.service.enviar(xml_signed)
+                except Exception as e:
+                    _logger.warning('Erro ao enviar lote', exc_info=True)
+                    status[
+                        'message'] = 'Falha de conexão - Verifique a internet'
+                    return status
+
+                import unicodedata
+                response = unicodedata.normalize(
+                    'NFKD', response).encode(
+                    'ascii', 'ignore')
+
+                status['files'].append({'name': '{0}-retenvio-rps.xml'.format(
+                    nfse['lista_rps'][0]['assinatura']),
+                    'data': base64.encodestring(response or '')})
+
+                if 'RetornoEnvioLoteRPS' in response:
+                    response = response.replace(
+                        '<?xml version="1.0" encoding="UTF-8"?>',
+                        '')
+                    resp = objectify.fromstring(response)
+                    if resp['{}Cabecalho'].Sucesso:
+                        if resp['{}Cabecalho'].Assincrono == 'S':
+                            self.invoice_id.status_send_nfse = 'enviado'
+                            self.invoice_id.lote_nfse = resp[
+                                '{}Cabecalho'].NumeroLote
+                            while True:
+                                time.sleep(2)
+                                result = self.check_nfse_by_lote()
+                                result['files'] = status[
+                                    'files'] + result['files']
+                                if result['status'] != 203:
+                                    break
+                            return result
+                        else:
+                            status['status'] = '100'
+                            status['message'] = 'NFS-e emitida com sucesso'
+                            status['success'] = resp['{}Cabecalho'].Sucesso
+                            if self.invoice_id.company_id.nfe_environment == '1':
+                                status['nfse_number'] = \
+                                    resp['{}ListaNFSe'].ConsultaNFSe[
+                                        0].NumeroNFe
+                                status['verify_code'] = \
+                                    resp['{}ListaNFSe'].ConsultaNFSe[
+                                        0].CodigoVerificacao
+                    else:
+                        status['status'] = resp['{}Erros'].Erro[0].Codigo
+                        status['message'] = resp['{}Erros'].Erro[0].Descricao
                         status['success'] = resp['{}Cabecalho'].Sucesso
-                        if self.invoice_id.company_id.nfe_environment == '1':
-                            status['nfse_number'] = \
-                                resp['{}ListaNFSe'].ConsultaNFSe[0].NumeroNFe
-                            status['verify_code'] = \
-                                resp['{}ListaNFSe'].ConsultaNFSe[0].CodigoVerificacao
                 else:
-                    status['status'] = resp['{}Erros'].Erro[0].Codigo
-                    status['message'] = resp['{}Erros'].Erro[0].Descricao
-                    status['success'] = resp['{}Cabecalho'].Sucesso
+                    status['status'] = '-1'
+                    status['message'] = response
+                    status['success'] = False
             else:
-                status['status'] = '-1'
-                status['message'] = response
-                status['success'] = False
+                return self.check_nfse_by_lote()
 
             return status
 
@@ -170,42 +197,64 @@ class BaseNfse(models.TransientModel):
 
             obj_consulta = {
                 'consulta': {
-                    'cidade': self.invoice_id.internal_number,
+                    'cidade': '6291',
                     'cpf_cnpj': re.sub('[^0-9]', '', self.invoice_id.company_id.partner_id.cnpj_cpf or ''),
                     'lote': self.invoice_id.lote_nfse}}
 
             path = os.path.dirname(os.path.dirname(__file__))
-            xml_send = render(obj_consulta, path, 'consulta_lote.xml')
+            xml_send = render(path, 'consulta_lote.xml', **obj_consulta)
 
-            response = client.service.consultarLote(xml_send)
+            status = {'status': '-1', 'success': False, 'message': '',
+                      'files': [{'name': '{0}-consulta-lote.xml'.format(
+                          obj_consulta['consulta']['lote']),
+                          'data': base64.encodestring(xml_send)},
+                      ]}
+            try:
+                response = client.service.consultarLote(xml_send)
+            except Exception as e:
+                _logger.warning('Erro ao consultar lote', exc_info=True)
+                status['message'] = 'Falha de conexão - Verifique a internet'
+                return status
 
-            status = {'status': '', 'message': '', 'files': [
-                {'name': '{0}-consulta-lote.xml'.format(
-                    obj_consulta['consulta']['lote']),
-                 'data': base64.encodestring(xml_send)},
-                {'name': '{0}-ret-consulta-lote.xml'.format(
-                    obj_consulta['consulta']['lote']),
-                 'data': base64.encodestring(response)}
-            ]}
+            print response
+
+            import unicodedata
+            response = unicodedata.normalize(
+                'NFKD', response).encode(
+                'ascii', 'ignore')
+
+            status['files'].append({'name': '{0}-ret-consulta-lote.xml'.format(
+                obj_consulta['consulta']['lote']),
+                'data': base64.encodestring(response)})
+
             if 'RetornoConsultaLote' in response:
+                response = response.replace(
+                    '<?xml version="1.0" encoding="UTF-8" ?>',
+                    '')
+                print response
                 resp = objectify.fromstring(response)
-                if resp['{}Cabecalho'].sucesso:
+                if resp['{}Cabecalho'].Sucesso:
                     status['status'] = '100'
                     status['message'] = 'NFS-e emitida com sucesso'
-                    status['success'] = resp['{}Cabecalho'].Sucesso
+                    status['success'] = True
                     status['nfse_number'] = resp['{}ListaNFSe'].ConsultaNFSe[
                         0].NumeroNFe
                     status['verify_code'] = resp['{}ListaNFSe'].ConsultaNFSe[
                         0].CodigoVerificacao
+                elif 'Alerta' in dir(resp['{}Alertas']):
+                    status['status'] = resp['{}Alertas'].Alerta[0].Codigo
+                    status['message'] = resp['{}Alertas'].Alerta[0].Descricao
+                    status['success'] = False
                 else:
                     status['status'] = resp['{}Erros'].Erro[0].Codigo
                     status['message'] = resp['{}Erros'].Erro[0].Descricao
-                    status['success'] = resp['{}Cabecalho'].Sucesso
+                    status['success'] = False
             else:
                 status['status'] = '-1'
                 status['message'] = response
                 status['success'] = False
 
+            self.invoice_id.status_send_nfse = 'nao_enviado'
             return status
 
         return super(BaseNfse, self).check_nfse_by_lote()
@@ -313,14 +362,14 @@ class BaseNfse(models.TransientModel):
                  valor_deducao * 100,
                  int(codigo_atividade),
                  int(tomador['cpf_cnpj']))
-           
+
             assinatura = hashlib.sha1(assinatura).hexdigest()
 
             rps = [{
                 'assinatura': assinatura,
                 'tomador': tomador,
                 'prestador': prestador,
-                'serie': 'NF',  #  or '',
+                'serie': 'NF',  # or '',
                 'numero': inv.internal_number or '',
                 'data_emissao': inv.date_in_out,
                 'situacao': 'N',

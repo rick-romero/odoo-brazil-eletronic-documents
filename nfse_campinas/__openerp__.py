@@ -41,6 +41,7 @@
         'report/danfse.xml',
         'views/account_invoice_view.xml',
         'views/res_company_view.xml',
+        'views/product_template_view.xml',
     ],
     'instalable': True
 }

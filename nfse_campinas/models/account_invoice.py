@@ -63,12 +63,18 @@ class AccountInvoice(models.Model):
     transaction = fields.Char(u'Transação', size=60,
                               readonly=True, states=FIELD_STATE)
 
+    status_send_nfse = fields.Selection(
+        [('nao_enviado', 'Não enviado'),
+         ('enviado', 'Enviado porém com problemas na consulta')],
+        'Status de Envio NFSe')
+
     @api.multi
     def action_invoice_send_nfse(self):
         if self.company_id.lote_sequence_id:
-            ir_env = self.env['ir.sequence']
-            lote = ir_env.next_by_id(self.company_id.lote_sequence_id.id)
-            self.lote_nfse = lote
+            if not self.lote_nfse or self.status_send_nfse == 'nao_enviado':
+                ir_env = self.env['ir.sequence']
+                lote = ir_env.next_by_id(self.company_id.lote_sequence_id.id)
+                self.lote_nfse = lote
         else:
             raise Warning(u'Atenção!', u'Configure na empresa a sequência para\
                                         gerar o lote da NFS-e')
