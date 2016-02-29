@@ -36,9 +36,10 @@ class AccountInvoice(models.Model):
 
     nfse_status = fields.Char(u'Status NFS-e', size=100)
     state = fields.Selection(selection_add=[
-        ('nfse_ready', u'Enviar NFS-e'),
+        ('nfse_ready', u'Enviar RPS'),
+        ('nfse_sent', u'RPS Enviado'),
         ('nfse_exception', u'Erro de autorização'),
-        ('nfse_cancelled', 'Cancelada')])
+        ('nfse_cancelled', u'Cancelada')])
 
     def _attach_files(self, obj_id, model, data, filename):
         obj_attachment = self.env['ir.attachment']
@@ -213,6 +214,7 @@ class AccountInvoice(models.Model):
     def action_invoice_send_nfse(self):
         event_obj = self.env['l10n_br_account.document_event']
         base_nfse = self.env['base.nfse'].create({'invoice_id': self.id,
+                                                  'company_id': self.company_id.id,
                                                   'city_code': '6291',
                                                   'certificate': self.company_id.nfe_a1_file,
                                                   'password': self.company_id.nfe_a1_password})

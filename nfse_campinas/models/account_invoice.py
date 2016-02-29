@@ -66,7 +66,7 @@ class AccountInvoice(models.Model):
     status_send_nfse = fields.Selection(
         [('nao_enviado', 'Não enviado'),
          ('enviado', 'Enviado porém com problemas na consulta')],
-        'Status de Envio NFSe')
+        'Status de Envio NFSe', default='nao_enviado')
 
     @api.multi
     def action_invoice_send_nfse(self):

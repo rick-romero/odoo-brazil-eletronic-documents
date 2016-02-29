@@ -25,6 +25,7 @@ import time
 import base64
 import hashlib
 import logging
+import unicodedata
 from lxml import objectify
 from datetime import datetime
 from openerp import api, fields, models, tools
@@ -95,29 +96,31 @@ class BaseNfse(models.TransientModel):
                         '')
                     resp = objectify.fromstring(response)
                     if resp['{}Cabecalho'].Sucesso:
-                        if resp['{}Cabecalho'].Assincrono == 'S':
-                            self.invoice_id.status_send_nfse = 'enviado'
-                            self.invoice_id.lote_nfse = resp[
-                                '{}Cabecalho'].NumeroLote
-                            while True:
-                                time.sleep(2)
-                                result = self.check_nfse_by_lote()
-                                result['files'] = status[
-                                    'files'] + result['files']
-                                if result['status'] != 203:
-                                    break
-                            return result
-                        else:
-                            status['status'] = '100'
-                            status['message'] = 'NFS-e emitida com sucesso'
-                            status['success'] = resp['{}Cabecalho'].Sucesso
-                            if self.invoice_id.company_id.nfe_environment == '1':
-                                status['nfse_number'] = \
-                                    resp['{}ListaNFSe'].ConsultaNFSe[
-                                        0].NumeroNFe
-                                status['verify_code'] = \
-                                    resp['{}ListaNFSe'].ConsultaNFSe[
-                                        0].CodigoVerificacao
+
+                        self.invoice_id.status_send_nfse = 'enviado'
+                        self.invoice_id.lote_nfse = resp[
+                            '{}Cabecalho'].NumeroLote
+                        while True:
+                            time.sleep(2)
+                            result = self.check_nfse_by_lote()
+                            result['files'] = status[
+                                'files'] + result['files']
+                            if result['status'] != 203:
+                                break
+
+                        if result['status'] == '-100':
+                            inicio = self.invoice_id.date_invoice
+                            rps = self.invoice_id.number
+                            serie = self.invoice_id.document_serie_id.code
+                            result_consulta = self.consulta_nfse_por_data(
+                                inicio,
+                                inicio,
+                                rps,
+                                serie)
+                            result_consulta['files'] = \
+                                result['files'] + result_consulta['files']
+                            return result_consulta
+                        return result
                     else:
                         status['status'] = resp['{}Erros'].Erro[0].Codigo
                         status['message'] = resp['{}Erros'].Erro[0].Descricao
@@ -127,7 +130,20 @@ class BaseNfse(models.TransientModel):
                     status['message'] = response
                     status['success'] = False
             else:
-                return self.check_nfse_by_lote()
+                result = self.check_nfse_by_lote()
+                if result['status'] == '-100':
+                    inicio = self.invoice_id.date_invoice
+                    rps = self.invoice_id.number
+                    serie = self.invoice_id.document_serie_id.code
+                    result_consulta = self.consulta_nfse_por_data(
+                        inicio,
+                        inicio,
+                        rps,
+                        serie)
+                    result_consulta['files'] = result[
+                        'files'] + result_consulta['files']
+                    return result_consulta
+                return result
 
             return status
 
@@ -173,23 +189,6 @@ class BaseNfse(models.TransientModel):
         return super(BaseNfse, self).cancel_nfse()
 
     @api.multi
-    def check_nfse_by_rps(self):
-        if self.city_code == '6291':  # Campinas
-
-            url = self._url_envio_nfse()
-            client = self._get_client(url)
-
-            obj_check = {}  # TODO Preencher corretamente
-
-            path = os.path.dirname(os.path.dirname(__file__))
-            xml_send = render(obj_check, path, 'consulta_nfse_por_rps.xml')
-
-            response = client.service.consultarNFSeRps(xml_send)
-            print response  # TODO Tratar resposta
-
-        return super(BaseNfse, self).check_nfse_by_rps()
-
-    @api.multi
     def check_nfse_by_lote(self):
         if self.city_code == '6291':  # Campinas
             url = self._url_envio_nfse()
@@ -216,8 +215,6 @@ class BaseNfse(models.TransientModel):
                 status['message'] = 'Falha de conexão - Verifique a internet'
                 return status
 
-            print response
-
             import unicodedata
             response = unicodedata.normalize(
                 'NFKD', response).encode(
@@ -231,33 +228,109 @@ class BaseNfse(models.TransientModel):
                 response = response.replace(
                     '<?xml version="1.0" encoding="UTF-8" ?>',
                     '')
-                print response
-                resp = objectify.fromstring(response)
-                if resp['{}Cabecalho'].Sucesso:
-                    status['status'] = '100'
-                    status['message'] = 'NFS-e emitida com sucesso'
-                    status['success'] = True
-                    status['nfse_number'] = resp['{}ListaNFSe'].ConsultaNFSe[
-                        0].NumeroNFe
-                    status['verify_code'] = resp['{}ListaNFSe'].ConsultaNFSe[
-                        0].CodigoVerificacao
-                elif 'Alerta' in dir(resp['{}Alertas']):
-                    status['status'] = resp['{}Alertas'].Alerta[0].Codigo
-                    status['message'] = resp['{}Alertas'].Alerta[0].Descricao
-                    status['success'] = False
-                else:
-                    status['status'] = resp['{}Erros'].Erro[0].Codigo
-                    status['message'] = resp['{}Erros'].Erro[0].Descricao
+                try:
+                    resp = objectify.fromstring(response)
+                    if resp['{}Cabecalho'].Sucesso:
+                        status['status'] = '100'
+                        status['message'] = 'NFS-e emitida com sucesso'
+                        status['success'] = True
+                        status['nfse_number'] = resp['{}ListaNFSe'].ConsultaNFSe[
+                            0].NumeroNFe
+                        status['verify_code'] = resp['{}ListaNFSe'].ConsultaNFSe[
+                            0].CodigoVerificacao
+                    elif 'Alerta' in dir(resp['{}Alertas']):
+                        status['status'] = resp['{}Alertas'].Alerta[0].Codigo
+                        status['message'] = resp[
+                            '{}Alertas'].Alerta[0].Descricao
+                        status['success'] = False
+                    else:
+                        status['status'] = resp['{}Erros'].Erro[0].Codigo
+                        status['message'] = resp['{}Erros'].Erro[0].Descricao
+                        status['success'] = False
+                except:
+                    status['status'] = '-100'
+                    status[
+                        'message'] = 'Erro ao tentar carregar a resposta da prefeitura'
                     status['success'] = False
             else:
                 status['status'] = '-1'
                 status['message'] = response
                 status['success'] = False
 
-            self.invoice_id.status_send_nfse = 'nao_enviado'
             return status
 
         return super(BaseNfse, self).check_nfse_by_lote()
+
+    @api.multi
+    def consulta_nfse_por_data(self, inicio, fim, rps, serie):
+        url = self._url_envio_nfse()
+        client = self._get_client(url)
+
+        obj_consulta = {
+            'consulta': {
+                'cidade': '6291',
+                'cpf_cnpj': re.sub('[^0-9]', '', self.company_id.partner_id.cnpj_cpf or ''),
+                'inscricao_municipal': re.sub('[^0-9]', '', self.company_id.partner_id.inscr_mun or ''),
+                'data_inicio': inicio,
+                'data_final': fim,
+                'nota_inicial': 1}}
+
+        path = os.path.dirname(os.path.dirname(__file__))
+        xml_send = render(path, 'consulta_notas.xml', **obj_consulta)
+
+        xml_send = "<!DOCTYPE ns1:ReqConsultaNotas [<!ATTLIST Cabecalho Id ID #IMPLIED>]>" + \
+            xml_send
+
+        pfx_path = self._save_pfx_certificate()
+        sign = Assinatura(pfx_path, self.password)
+        reference = '#Consulta:notas'
+        xml_signed = sign.assina_xml(xml_send, reference)
+
+        xml_signed = xml_signed.replace("""<!DOCTYPE ns1:ReqConsultaNotas [
+<!ATTLIST Cabecalho Id ID #IMPLIED>
+]>\n""", "")
+
+        status = {
+            'status': '-1', 'success': False,
+            'message': 'Consulta NFS-e com problemas',
+            'files': [{'name': '{0}-consulta-data.xml'.format(rps),
+                       'data': base64.encodestring(xml_send)}]
+        }
+
+        try:
+            response = client.service.consultarNota(xml_signed)
+        except Exception as e:
+            _logger.warning('Erro ao consultar lote', exc_info=True)
+            status['message'] = 'Falha de conexão - Verifique a internet'
+            return status
+
+        response = unicodedata.normalize(
+            'NFKD', response).encode(
+            'ascii', 'ignore')
+
+        status['files'].append({
+            'name': '{0}-ret-consulta-data.xml'.format(rps),
+            'data': base64.encodestring(response)
+        })
+
+        response = response.replace(
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            '')
+        if 'ns1:RetornoConsultaNotas' in response:
+            resp = objectify.fromstring(response)
+            if 'Nota' in dir(resp['{}Notas']):
+                for nota in resp['{}Notas'].Nota:
+                    if str(nota.NumeroRPS) == rps and str(
+                            nota.SeriePrestacao) == serie:
+                        status['status'] = 100
+                        status['message'] = 'Nota emitida com sucesso'
+                        status['success'] = True
+                        self.invoice_id.internal_number = nota.NumeroNota
+                        return status
+
+        status[
+            'message'] = 'Não foi possível identificar o erro. Verifique os eventos eletrônicos!'
+        return status
 
     @api.multi
     def print_pdf(self):
@@ -356,7 +429,7 @@ class BaseNfse(models.TransientModel):
 
             assinatura = '%011dNF   %012d%s%s %s%s%015d%015d%010d%014d' % \
                 (int(prestador['inscricao_municipal']),
-                 int(inv.internal_number),
+                 int(inv.number),
                  data_envio, inv.taxation, 'N', 'N' if tipo_recolhimento == 'A' else 'S',
                  valor_servico * 100,
                  valor_deducao * 100,
@@ -370,7 +443,7 @@ class BaseNfse(models.TransientModel):
                 'tomador': tomador,
                 'prestador': prestador,
                 'serie': 'NF',  # or '',
-                'numero': inv.internal_number or '',
+                'numero': inv.number or '',
                 'data_emissao': inv.date_in_out,
                 'situacao': 'N',
                 'serie_prestacao': inv.document_serie_id.code,
