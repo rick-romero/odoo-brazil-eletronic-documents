@@ -47,6 +47,8 @@ class BaseNfse(models.TransientModel):
 
             if self.invoice_id.status_send_nfse == 'nao_enviado':
                 nfse = self._get_nfse_object()
+                self.invoice_id.transaction = nfse[
+                    'lista_rps'][0]['assinatura']
                 url = self._url_envio_nfse()
 
                 client = self._get_client(url)
@@ -71,7 +73,7 @@ class BaseNfse(models.TransientModel):
                      'data': base64.encodestring(xml_signed)},
                 ]}
                 try:
-                    if self.invoice_id.company_id.nfe_environment == '2':
+                    if self.invoice_id.company_id.nfse_environment == '2':
                         response = client.service.testeEnviar(xml_signed)
                     else:
                         response = client.service.enviar(xml_signed)
@@ -96,6 +98,12 @@ class BaseNfse(models.TransientModel):
                         '')
                     resp = objectify.fromstring(response)
                     if resp['{}Cabecalho'].Sucesso:
+                        if self.invoice_id.company_id.nfse_environment == '2':
+                            status['status'] = '100'
+                            status['success'] = True
+                            status[
+                                'message'] = 'NFSe emitida em homologação com sucesso!'
+                            return status
 
                         self.invoice_id.status_send_nfse = 'enviado'
                         self.invoice_id.lote_nfse = resp[
@@ -155,30 +163,65 @@ class BaseNfse(models.TransientModel):
             url = self._url_envio_nfse()
             client = self._get_client(url)
 
-            # TODO Preencher corretamente
             obj_cancelamento = {
                 'cancelamento': {
-                    'nota_id': self.invoice_id.internal_number}}
+                    'nota_id': self.invoice_id.internal_number,
+                    'assinatura': self.invoice_id.transaction,
+                    'motivo': 'Cancelamento de Nota Fiscal devido',
+                    'cidade': '6291',
+                    'cpf_cnpj': re.sub('[^0-9]', '', self.company_id.partner_id.cnpj_cpf or ''),
+                    'inscricao_municipal': re.sub('[^0-9]', '', self.company_id.partner_id.inscr_mun or '')
+                }
+            }
 
             path = os.path.dirname(os.path.dirname(__file__))
             xml_send = render(
                 path, 'cancelamento.xml', **obj_cancelamento)
 
-            response = client.service.cancelar(xml_send)
-
             status = {'status': '', 'message': '', 'files': [
                 {'name': '{0}-canc-envio.xml'.format(
                     obj_cancelamento['cancelamento']['nota_id']),
-                 'data': base64.encodestring(xml_send)},
-                {'name': '{0}-canc-envio.xml'.format(
+                 'data': base64.encodestring(xml_send)}]}
+
+            xml_send = "<!DOCTYPE ns1:ReqCancelamentoNFSe [<!ATTLIST Lote Id ID #IMPLIED>]>" + \
+                xml_send
+
+            pfx_path = self._save_pfx_certificate()
+            sign = Assinatura(pfx_path, self.password)
+            reference = '#lote:1ABCDZ'
+            xml_signed = sign.assina_xml(xml_send, reference)
+
+            xml_signed = xml_signed.replace("""<!DOCTYPE ns1:ReqCancelamentoNFSe [
+<!ATTLIST Lote Id ID #IMPLIED>
+]>\n""", "")
+
+            response = client.service.cancelar(xml_signed)
+
+            status['files'].append({
+                'name': '{0}-canc-envio.xml'.format(
                     obj_cancelamento['cancelamento']['nota_id']),
-                 'data': base64.encodestring(response)}
-            ]}
+                'data': base64.encodestring(response)
+            })
             if 'RetornoCancelamentoNFSe' in response:
+                response = response.replace(
+                    '<?xml version="1.0" encoding="UTF-8"?>',
+                    '')
+                print response
                 resp = objectify.fromstring(response)
-                status['status'] = resp['{}Erros'].Erro[0].Codigo
-                status['message'] = resp['{}Erros'].Erro[0].Descricao
-                status['success'] = resp['{}Cabecalho'].Sucesso
+                if resp['{}Cabecalho'].Sucesso:
+                    status['status'] = '200'
+                    status['message'] = 'Cancelada com sucesso'
+                    status['success'] = True
+                else:
+                    if resp['{}Alertas'].Alerta[0].Codigo == 1301:
+                        status['status'] = '200'
+                        status['message'] = 'Cancelada com sucesso'
+                        status['success'] = True
+                        return status
+
+                    status['status'] = resp['{}Alertas'].Alerta[0].Codigo
+                    status['message'] = resp['{}Alertas'].Alerta[0].Descricao
+                    status['success'] = resp['{}Cabecalho'].Sucesso
             else:
                 status['status'] = '-1'
                 status['message'] = response

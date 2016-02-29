@@ -4,10 +4,10 @@
 	<Cabecalho>
 		<CodCidade>{{ cancelamento.cidade }}</CodCidade>
 		<CPFCNPJRemetente>{{ cancelamento.cpf_cnpj }}</CPFCNPJRemetente>
-		<transacao>{{ cancelamento.transacao }}</transacao>
+		<transacao>true</transacao>
 		<Versao>1</Versao>
 	</Cabecalho>
-	<Lote Id="lote:{{ cancelamento.lote }}">
+	<Lote Id="lote:1ABCDZ">
 		<Nota Id="nota:{{ cancelamento.nota_id }}">
 			<InscricaoMunicipalPrestador>{{ cancelamento.inscricao_municipal }}</InscricaoMunicipalPrestador>
 			<NumeroNota>{{ cancelamento.nota_id }}</NumeroNota>
