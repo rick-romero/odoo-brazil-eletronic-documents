@@ -244,7 +244,7 @@ class AccountInvoice(models.Model):
     @api.multi
     def button_cancel_nfse(self):
         cancel_result = True
-        if self.state == 'open':
+        if self.state == 'open' and self.company_id.nfse_environment == '1':
             cancel_result, last_event = self.cancel_nfse_online()
         if cancel_result:
             return super(AccountInvoice, self).action_cancel()
@@ -297,4 +297,4 @@ class AccountInvoice(models.Model):
         base_nfse = self.env['base.nfse'].create({'invoice_id': self.id,
                                                   'city_code': '6291'})
 
-        return base_nfse.print_pdf()
+        return base_nfse.print_pdf(self)

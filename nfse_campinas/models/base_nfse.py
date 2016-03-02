@@ -376,10 +376,10 @@ class BaseNfse(models.TransientModel):
         return status
 
     @api.multi
-    def print_pdf(self):
+    def print_pdf(self, invoice):
         if self.city_code == '6291':  # Campinas
             return self.env['report'].get_action(
-                self, 'nfse_campinas.danfse_report')
+                invoice, 'nfse_campinas.danfse_report')
 
     def _url_envio_nfse(self):
         if self.city_code == '6291':  # Campinas
