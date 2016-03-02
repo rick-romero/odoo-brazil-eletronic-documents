@@ -194,10 +194,6 @@ class AccountInvoice(models.Model):
                         strErro += u'Produtos e Serviços: %s - %s, Qtde: %s - Tipo do ISSQN\n' % (
                             inv_line.product_id.default_code, inv_line.product_id.name, inv_line.quantity)
 
-                    if not inv_line.service_type_id:
-                        strErro += u'Produtos e Serviços: %s - %s, Qtde: %s - Tipo do Serviço\n' % (
-                            inv_line.product_id.default_code, inv_line.product_id.name, inv_line.quantity)
-
                 if not inv_line.pis_cst_id:
                     strErro += u'Produtos e Serviços: %s - %s, Qtde: %s - CST do PIS\n' % (
                         inv_line.product_id.default_code, inv_line.product_id.name, inv_line.quantity)
