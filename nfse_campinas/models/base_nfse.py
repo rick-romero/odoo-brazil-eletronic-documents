@@ -412,7 +412,7 @@ class BaseNfse(models.TransientModel):
                 'complemento': inv.partner_id.street2 or '',
                 'bairro': inv.partner_id.district or 'Sem Bairro',
                 'cidade': inv.partner_id.l10n_br_city_id.siafi_code,
-                'cidade_descricao': inv.company_id.partner_id.city or '',
+                'cidade_descricao': inv.partner_id.l10n_br_city_id.name or '',
                 'uf': inv.partner_id.state_id.code,
                 'cep': re.sub('[^0-9]', '', inv.partner_id.zip),
                 'tipo_logradouro': 'Rua',
