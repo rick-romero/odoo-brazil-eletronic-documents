@@ -150,7 +150,9 @@ class BaseNfse(models.TransientModel):
                         serie)
                     result_consulta['files'] = result[
                         'files'] + result_consulta['files']
+                    self.invoice_id.status_send_nfse = 'nao_enviado'
                     return result_consulta
+                self.invoice_id.status_send_nfse = 'nao_enviado'
                 return result
 
             return status
