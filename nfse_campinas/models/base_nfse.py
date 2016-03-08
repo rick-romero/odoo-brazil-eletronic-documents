@@ -29,6 +29,7 @@ import unicodedata
 from lxml import objectify
 from datetime import datetime
 from openerp import api, fields, models, tools
+from openerp.exceptions import Warning as UserError
 
 from openerp.addons.base_nfse.service.xml import render
 from openerp.addons.base_nfse.service.signature import Assinatura
@@ -54,7 +55,7 @@ class BaseNfse(models.TransientModel):
                 client = self._get_client(url)
                 path = os.path.dirname(os.path.dirname(__file__))
                 xml_send = render(path, 'envio_rps.xml', nfse=nfse)
-
+ 
                 xml_send = "<!DOCTYPE ns1:ReqEnvioLoteRPS [<!ATTLIST Lote Id ID #IMPLIED>]>" + \
                     xml_send
 
@@ -405,6 +406,12 @@ class BaseNfse(models.TransientModel):
         if self.invoice_id:
             inv = self.invoice_id
 
+            inscricao_tomador = '0000000'
+            if inv.partner_id.l10n_br_city_id.siafi_code == '6291':
+                inscricao_tomador = re.sub('[^0-9]', '', inv.partner_id.inscr_mun or '')
+                if not inscricao_tomador:
+                    raise UserError('Atenção!', 'Inscrição municipal obrigatória!')
+
             phone = inv.partner_id.phone or ''
             tomador = {
                 'cpf_cnpj': re.sub('[^0-9]', '', inv.partner_id.cnpj_cpf or ''),
@@ -421,7 +428,7 @@ class BaseNfse(models.TransientModel):
                 'tipo_bairro': 'Normal',
                 'ddd': re.sub('[^0-9]', '', phone.split(' ')[0]),
                 'telefone': re.sub('[^0-9]', '', phone.split(' ')[1]),
-                'inscricao_municipal': re.sub('[^0-9]', '', inv.partner_id.inscr_mun or '000000000'),
+                'inscricao_municipal': inscricao_tomador,
                 'email': inv.partner_id.email or '',
             }
 
@@ -463,9 +470,7 @@ class BaseNfse(models.TransientModel):
             valor_servico = inv.amount_total
             valor_deducao = 0.0
             codigo_atividade = re.sub('[^0-9]', '', inv.cnae_id.code or '')
-            tipo_recolhimento = 'A'
-            if inv.issqn_wh or inv.pis_wh or inv.cofins_wh or inv.csll_wh or inv.irrf_wh or inv.inss_wh:
-                tipo_recolhimento = 'R'
+            tipo_recolhimento = inv.type_retention
 
             data_envio = datetime.strptime(
                 inv.date_in_out,
@@ -495,8 +500,8 @@ class BaseNfse(models.TransientModel):
                 'codigo_atividade': codigo_atividade,
                 'aliquota_atividade': str("%.4f" % aliquota_issqn),
                 'tipo_recolhimento': tipo_recolhimento,
-                'municipio_prestacao': tomador['cidade'],
-                'municipio_descricao_prestacao': tomador['cidade_descricao'],
+                'municipio_prestacao': inv.provider_city_id.siafi_code,
+                'municipio_descricao_prestacao': inv.provider_city_id.name or '',
                 'operacao': inv.operation,
                 'tributacao': inv.taxation,
                 'valor_pis': str("%.2f" % inv.pis_value),
