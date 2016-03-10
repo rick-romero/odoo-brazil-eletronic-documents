@@ -20,29 +20,31 @@
 ###############################################################################
 
 
-{
-    'name': 'NFS-e Campinas',
-    'summary': """Módulo que implementa o Layout da cidade de Campinas                
-                Depends: base_nfse, suds, suds_requests""",
-    'version': '8.0',
-    'category': 'Localisation',
-    'author': 'Trustcode',
-    'license': 'AGPL-3',
-    'website': 'http://www.trustcode.com.br',
-    'contributors': ['Danimar Ribeiro <danimaribeiro@gmail.com>',
-                     'Mackilem Van der Laan Soares <mack.vdl@gmail.com>'
-                     ],
-    'depends': [
-        'base_nfse',
-        'l10n_br_account_withholding'
-    ],
-    'data': [
-        'data/l10n_br_base.city.csv',
-        'report/danfse.xml',
-        'views/account_invoice_view.xml',
-        'views/res_company_view.xml',
-        'views/product_template_view.xml',
-        'views/nfse_extra_view.xml',
-    ],
-    'instalable': True
-}
+import logging
+
+from openerp import api, fields, models
+
+
+_logger = logging.getLogger(__name__)
+
+
+class NFSeConsultaPorData(models.Model):
+    _name = 'nfse.consulta.data'
+
+    data_inicio = fields.Date('Inicio', required=True)
+    data_final = fields.Date('Final', required=True)
+    nota_inicial = fields.Integer('Numeração Inicial', required=True)
+
+    @api.multi
+    def action_consultar_notas(self):
+        base_nfse = self.env['base.nfse'].create(
+            {'company_id': self.env.user.company_id.id,
+             'city_code': '6291',
+             'certificate': self.env.user.company_id.nfe_a1_file,
+             'password': self.env.user.company_id.nfe_a1_password})
+
+        base_nfse.consulta_nfse_por_data(
+            self.data_inicio,
+            self.data_final,
+            '1', '99')
+        return

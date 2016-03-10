@@ -27,6 +27,7 @@ from openerp import api, fields, models
 from openerp.tools.translate import _
 from openerp.exceptions import Warning
 
+
 _logger = logging.getLogger(__name__)
 
 
@@ -36,9 +37,9 @@ class AccountInvoice(models.Model):
 
     nfse_status = fields.Char(u'Status NFS-e', size=100)
     state = fields.Selection(selection_add=[
-        ('nfse_ready', u'Enviar NFS-e'),
+        ('nfse_ready', u'Enviar RPS'),
         ('nfse_exception', u'Erro de autorização'),
-        ('nfse_cancelled', 'Cancelada')])
+        ('nfse_cancelled', u'Cancelada')])
 
     def _attach_files(self, obj_id, model, data, filename):
         obj_attachment = self.env['ir.attachment']
@@ -193,10 +194,6 @@ class AccountInvoice(models.Model):
                         strErro += u'Produtos e Serviços: %s - %s, Qtde: %s - Tipo do ISSQN\n' % (
                             inv_line.product_id.default_code, inv_line.product_id.name, inv_line.quantity)
 
-                    if not inv_line.service_type_id:
-                        strErro += u'Produtos e Serviços: %s - %s, Qtde: %s - Tipo do Serviço\n' % (
-                            inv_line.product_id.default_code, inv_line.product_id.name, inv_line.quantity)
-
                 if not inv_line.pis_cst_id:
                     strErro += u'Produtos e Serviços: %s - %s, Qtde: %s - CST do PIS\n' % (
                         inv_line.product_id.default_code, inv_line.product_id.name, inv_line.quantity)
@@ -213,6 +210,7 @@ class AccountInvoice(models.Model):
     def action_invoice_send_nfse(self):
         event_obj = self.env['l10n_br_account.document_event']
         base_nfse = self.env['base.nfse'].create({'invoice_id': self.id,
+                                                  'company_id': self.company_id.id,
                                                   'city_code': '6291',
                                                   'certificate': self.company_id.nfe_a1_file,
                                                   'password': self.company_id.nfe_a1_password})
@@ -234,29 +232,47 @@ class AccountInvoice(models.Model):
 
         if send['success']:
             self.state = 'open'
-            self.nfse_status = send['status']
+            self.nfse_status = str(send['status']) + ' - ' + send['message']
         else:
             self.state = 'nfse_exception'
-            self.nfse_status = '0 - Erro de autorização (verifique os \
-                                documentos eletrônicos para mais info)'
+            self.nfse_status = str(send['status']) + ' - ' + send['message']
 
     @api.multi
-    def button_cancel(self):
+    def button_cancel_nfse(self):
         cancel_result = True
-        if self.state == 'open':
-            cancel_result = self.cancel_invoice_online()
+        if self.state == 'open' and self.company_id.nfse_environment == '1':
+            cancel_result, last_event = self.cancel_nfse_online()
         if cancel_result:
-            return super(AccountInvoice, self).button_cancel()
+            return super(AccountInvoice, self).action_cancel()
+        if last_event:
+            view = self.env['ir.model.data'].get_object_reference(
+                'l10n_br_account', 'l10n_br_account_document_event_form')
+            return {
+                'name': _(u"Eventos Eletrônicos"),
+                'view_mode': 'form',
+                'view_id': view[1],
+                'view_type': 'form',
+                'res_model': 'l10n_br_account.document_event',
+                'res_id': last_event,
+                'type': 'ir.actions.act_window',
+                'nodestroy': True,
+                'target': 'new',
+                'domain': '[]',
+                'context': None
+            }
 
     @api.multi
-    def cancel_invoice_online(self):
+    def cancel_nfse_online(self):
         event_obj = self.env['l10n_br_account.document_event']
         base_nfse = self.env['base.nfse'].create({'invoice_id': self.id,
-                                                  'city_code': '6291'})
+                                                  'company_id': self.company_id.id,
+                                                  'city_code': '6291',
+                                                  'certificate': self.company_id.nfe_a1_file,
+                                                  'password': self.company_id.nfe_a1_password})
 
         cancelamento = base_nfse.cancel_nfse()
         vals = {
-            'type': 'Cancelamento NFS-e',
+            'type': '16',
             'status': cancelamento['status'],
             'company_id': self.company_id.id,
             'origin': '[NFS-e] {0}'.format(self.internal_number),
@@ -265,14 +281,16 @@ class AccountInvoice(models.Model):
             'document_event_ids': self.id
         }
         event = event_obj.create(vals)
+        last_event = False
         for xml_file in cancelamento['files']:
             self._attach_files(event.id, 'l10n_br_account.document_event',
                                xml_file['data'], xml_file['name'])
-        return cancelamento['success']
+            last_event = event.id
+        return cancelamento['success'], last_event
 
     @api.multi
     def invoice_print(self):
         base_nfse = self.env['base.nfse'].create({'invoice_id': self.id,
                                                   'city_code': '6291'})
 
-        return base_nfse.print_pdf()
+        return base_nfse.print_pdf(self)

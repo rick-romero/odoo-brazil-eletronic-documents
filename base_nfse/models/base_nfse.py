@@ -38,6 +38,7 @@ class BaseNfse(models.Model):
             item.certificate = self.env.user.company_id.nfe_a1_file
 
     city_code = fields.Char(u'Código Cidade', size=100)
+    company_id = fields.Many2one('res.company', string=u'Empresa')
     invoice_id = fields.Many2one('account.invoice', string=u'Fatura')
     name = fields.Char('Nome', size=100)
     certificate = fields.Binary('Certificado', default=_company_certificate)

@@ -24,3 +24,4 @@ from . import res_company
 from . import base_nfse
 from . import l10n_br_city
 from . import account_invoice
+from . import nfse_extra
