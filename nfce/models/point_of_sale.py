@@ -20,11 +20,12 @@
 import logging
 from openerp import tools
 from openerp.osv import fields, osv
+from openerp.osv import orm
 from openerp.tools.translate import _
-import time
 from openerp.tools import float_is_zero
 import openerp.addons.decimal_precision as dp
 import openerp.addons.product.product
+from openerp.exceptions import Warning as UserError
 
 from ..sped.nfce.nfce_factory import NfCeFactory
 from openerp.addons.nfe.sped.nfe.processing.xml import send
@@ -32,14 +33,21 @@ from ..sped.nfce.validator.config_check import validate_nfce_configuration
 
 _logger = logging.getLogger(__name__)
 
-
+class L10n_brDocumentEvent(orm.Model):
+    _inherit = 'l10n_br_account.document_event'
+    
+    _columns = {
+        'pos_order_event_id': fields.many2one(
+            'pos.order', 'Pos Sales'),
+    }
+    
 class pos_order(osv.osv):
 
     _inherit = "pos.order"
 
     _columns = {
         'account_document_event_ids': fields.one2many(
-            'l10n_br_account.document_event', 'document_event_ids',
+            'l10n_br_account.document_event', 'pos_order_event_id',
             u'Eventos'),
         }
 
@@ -47,10 +55,8 @@ class pos_order(osv.osv):
         return NfCeFactory().get_nfe(nfe_version)
 
     def action_nfce(self, cr, uid, ids, context=None):
-        event_obj = self.pool.get('l10n_br_account.document_event')
-        product_obj = self.pool.get('product.product')
-        nfce_ids = []
-
+        event_pool = self.pool['l10n_br_account.document_event']
+                        
         for order in self.pool.get('pos.order').browse(cr, uid, ids, context=context):
             if order.invoice_id:
                 raise osv.except_osv(_('Error!'), _(
@@ -62,24 +68,25 @@ class pos_order(osv.osv):
             validate_nfce_configuration(company)
             nfe_obj = self._get_nfe_factory(company.nfe_version)
 
-            nfes = nfe_obj.get_nfce(cr, uid, ids, int(company.nfe_environment), context)
-            xml = nfes[0].xml
-            eventos = [ ]
+            nfes = nfe_obj.get_nfce(cr, uid, ids, int(company.nfe_environment), context)            
+            eventos = []
             for processo in send(company, nfes):
-               vals = {
-                            'type': str(processo.webservice),
-                            'status': processo.resposta.cStat.valor,
-                            'response': '',
-                            'company_id': company.id,
-                  #          'origin': '[NF-E]' + inv.internal_number,
-                            #TODO: Manipular os arquivos manualmente
-                            # 'file_sent': processo.arquivos[0]['arquivo'],
-                            # 'file_returned': processo.arquivos[1]['arquivo'],
-                            'message': processo.resposta.xMotivo.valor,
-                            'state': 'done',
-                   #         'document_event_ids': inv.id
-               }
-               eventos.append(vals)
+                vals = {
+                    'type': str(processo.webservice),
+                    'status': processo.resposta.cStat.valor,
+                    'response': '',
+                    'company_id': company.id,          
+                    'message': processo.resposta.xMotivo.valor,
+                    'state': 'done',
+                    'pos_order_event_id': order.id,
+                }
+                if processo.webservice == 1:
+                    for prot in processo.resposta.protNFe:                        
+                        vals["status"] = prot.infProt.cStat.valor
+                        vals["message"] = prot.infProt.xMotivo.valor                        
+                eventos.append(vals)
+                event_pool.create(cr, uid, vals)
+                
             return True
 
     def create_from_ui(self, cr, uid, orders, context=None):

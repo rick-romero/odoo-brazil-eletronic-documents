@@ -106,32 +106,30 @@
                      value-thousands-separator='' >
 
                 <div font='b' id="areaI">
-                    <left>
+                    <div style="float:left;">
                         <t t-if='receipt.company.logo'>
-                            <img t-att-src='receipt.company.logo' />
+                            <img t-att-src='receipt.company.logo' style="max-width:70px;max-height:70px;" />
                             <br/>
-                        </t>
+                        </t>                      
                         <t t-if='!receipt.company.logo'>
                             <h1><t t-esc='receipt.company.name' /></h1>
                             <br/>
                         </t>
+                     </div>
+                     <div>
                         <t t-if="receipt.company.legal_name">
                             <div><t t-esc="receipt.company.legal_name"/></div>
                         </t>
                         <t t-if="receipt.company.cnpj">
-                            <div><t t-esc="receipt.company.cnpj"/></div>
-                        </t>
-                    </left>
-                    <right>
-                        <t t-if="receipt.company.inscr_mun">
-                            <t t-esc="receipt.company.inscr_mun"/>
-                            <br/>
+                        	CNPJ: 
+                            <t t-esc="receipt.company.cnpj"/>                            
                         </t>
                         <t t-if="receipt.company.inscr_est">
+                        	RG: 
                             <t t-esc="receipt.company.inscr_est"/>
                             <br/>
                         </t>
-                    </right>
+                    </div>
                     <div>
                         <t t-if="receipt.company.address">
                             <t t-esc="receipt.company.address" />

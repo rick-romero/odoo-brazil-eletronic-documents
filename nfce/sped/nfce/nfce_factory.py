@@ -31,7 +31,7 @@ class NfCeFactory(object):
         :return: Objeto Nfe
         """
         if nfe_version == '3.10':
-            from openerp.addons.l10n_br_account_product.sped.nfe.document import NFCe310
+            from document import NFCe310
             nfe_obj = NFCe310()
         else:
             raise Warning(_('NFC-E não disponivel para NF-E versão %s') %

@@ -18,22 +18,23 @@
 ###############################################################################
 
 {
-    'name': 'NFCE',
-    'version': '0.1',
+    'name': 'NFC-e Cupom Eletrônico Brasileiro',
+    'version': '8.0.0.0.1',
     'category': 'Point of Sale',
     'description': """Implementacão da notas fiscais do consumidor
-    eletronica / NFC-E """,
-    'author': 'KMEE',
+    eletrônica / NFC-E """,
+    'author': 'KMEE, Trustcode',
     'license': 'AGPL-3',
-    'website': 'http://www.kmee.com.br',
+    'website': 'http://github.com/odoo-brazil',
     'description': """
     """,
     'depends': [
         'nfe',
         'point_of_sale',
     ],
-    'data': [
-        'views/template.xml'
+    'data': [ 
+        'views/pos_order_view.xml',
+        'views/point_of_sale.xml',
     ],
     'qweb': ['static/src/xml/pos.xml'],
     'demo': [],

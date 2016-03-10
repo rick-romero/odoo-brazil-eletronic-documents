@@ -88,6 +88,7 @@ def send(company, nfe):
     p = __processo(company)
     # Busca a versão da NF a ser emitida, não a do cadastro da empresa
     p.versao = str(nfe[0].infNFe.versao.valor)
+    p.modelo = str(nfe[0].infNFe.ide.mod.valor)
     p.danfe.logo = add_backgound_to_logo_image(company)
     p.danfe.leiaute_logo_vertical = True
     p.danfe.nome_sistema = company.nfe_email or \
@@ -168,12 +169,15 @@ def print_danfe(inv):
 
 
 def add_backgound_to_logo_image(company):
-    logo = company.logo
-    logo_image = Image.open(StringIO(logo.decode('base64')))
-    image_path = os.path.join(company.nfe_export_folder, 'company_logo.png')
-
-    bg = Image.new("RGB", logo_image.size, (255, 255, 255))
-    bg.paste(logo_image, logo_image)
-    bg.save(image_path)
-
-    return image_path
+    try:
+        logo = company.logo
+        logo_image = Image.open(StringIO(logo.decode('base64')))
+        image_path = os.path.join(company.nfe_export_folder, 'company_logo.png')
+    
+        bg = Image.new("RGB", logo_image.size, (255, 255, 255))
+        bg.paste(logo_image, logo_image)
+        bg.save(image_path)
+    
+        return image_path
+    except:
+        pass

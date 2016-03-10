@@ -17,5 +17,5 @@
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.        #
 ###############################################################################
 
-import sped
-import models
+from . import sped
+from . import models
