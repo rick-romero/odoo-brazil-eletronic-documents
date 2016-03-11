@@ -41,7 +41,6 @@
     """,
     'depends': [
         'nfe',
-        'nfe_attach',
     ],
     'data': [
         'data/nfe_schedule.xml',
