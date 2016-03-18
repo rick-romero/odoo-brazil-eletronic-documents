@@ -95,7 +95,7 @@ def send(company, nfe):
     # Busca a versão da NF a ser emitida, não a do cadastro da empresa
     p.versao = str(nfe[0].infNFe.versao.valor)
     p.danfe.logo = add_backgound_to_logo_image(company)
-    p.danfe.leiaute_logo_vertical = True
+    p.danfe.leiaute_logo_vertical = False
     p.danfe.nome_sistema = company.nfe_email or \
         u"""Odoo/OpenERP - Sistema de Gestao Empresarial de Codigo Aberto
         - 100%% WEB - www.openerpbrasil.org"""
