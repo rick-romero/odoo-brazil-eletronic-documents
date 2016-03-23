@@ -15,37 +15,10 @@
 #                                                                             #
 # You should have received a copy of the GNU Affero General Public License    #
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.       #
+#                                                                             #
 ###############################################################################
 
-{
-    'name': 'Manifesto Destinatário NFe',
-    'version': '8.0.1.0.0',
-    'category': 'NFE',
-    'description': """Implementa a consulta de nfe periodicamente no SEFAZ""",
-    'author': 'Danimar Ribeiro',
-    'license': 'AGPL-3',
-    'website': 'http://www.trustcode.com.br',
-    'description': """
-      Este módulo serve para efetuar download de notas em que são destinada
-      a empresa.
-      Manifesta a ciência ou desconhecimento da NF-e
 
-      Dependencias: pysped, geraldo, pyxmlsec
-      Instalando pyxmlsec
-        sudo pip install pyxmlsec
-        Dependencias ->
-        sudo apt-get install libxmlsec1-dev
-        sudo apt-get install libxml2-dev
-      Instalando geraldo
-        sudo pip install geraldo
-    """,
-    'depends': [
-        'nfe',
-    ],
-    'data': [
-        'data/nfe_schedule.xml',
-        'views/nfe_mde_view.xml'
-    ],
-    'installable': True,
-    'active': False,
-}
+from . import models
+from . import report
+from . import wizard

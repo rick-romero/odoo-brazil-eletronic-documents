@@ -38,6 +38,7 @@ from openerp.addons.base_nfse.service.signature import Assinatura
 _logger = logging.getLogger(__name__)
 
 
+
 class BaseNfse(models.TransientModel):
     _inherit = 'base.nfse'
 

@@ -15,37 +15,35 @@
 #                                                                             #
 # You should have received a copy of the GNU Affero General Public License    #
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.       #
+#                                                                             #
 ###############################################################################
 
 {
-    'name': 'Manifesto Destinatário NFe',
-    'version': '8.0.1.0.0',
+    'name': 'Importação de XML Diretamente do Manifesto',
+    'version': '1.0',
     'category': 'NFE',
-    'description': """Implementa a consulta de nfe periodicamente no SEFAZ""",
-    'author': 'Danimar Ribeiro',
+    'description': """Integra os módulos de importação do xml e
+        manifesto de destinatário""",
+    'author': 'Danimar Ribeiro - Trustcode',
     'license': 'AGPL-3',
     'website': 'http://www.trustcode.com.br',
+    'contributors': ['Danimar Ribeiro <danimaribeiro@gmail.com>',
+                     'Mackilem Van der Laan Soares <mack.vdl@gmail.com>'
+                     ],
     'description': """
-      Este módulo serve para efetuar download de notas em que são destinada
-      a empresa.
-      Manifesta a ciência ou desconhecimento da NF-e
-
-      Dependencias: pysped, geraldo, pyxmlsec
-      Instalando pyxmlsec
-        sudo pip install pyxmlsec
-        Dependencias ->
-        sudo apt-get install libxmlsec1-dev
-        sudo apt-get install libxml2-dev
-      Instalando geraldo
-        sudo pip install geraldo
+        Com este módulo você pode programar para realizar a importação automática
+        de NF-e apartir do módulo de Manifesto do Destinatário (MDE).
+        O MDE periodicamente busca as notas destinadas a empresa, este módulo
+        pega as notas baixadas e faz a importação.
     """,
     'depends': [
-        'nfe',
+        'nfe_import',
+        'nfe_mde',
     ],
     'data': [
-        'data/nfe_schedule.xml',
-        'views/nfe_mde_view.xml'
+        'views/nfe_mde_view.xml',
+        'report/report_danfe.xml',
+        'wizard/wizard_nfe_import_xml_view.xml',
     ],
-    'installable': True,
-    'active': False,
+    'installable': True
 }
