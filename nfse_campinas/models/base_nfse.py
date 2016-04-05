@@ -515,6 +515,7 @@ class BaseNfse(models.TransientModel):
                 'aliquota_csll': str("%.2f" % aliquota_csll),
                 'aliquota_inss': str("%.2f" % aliquota_inss),
                 'aliquota_ir': str("%.2f" % aliquota_ir),
+                'descricao': "%s\n%s" % (inv.comment, inv.fiscal_comment),
                 'deducoes': deducoes,
                 'itens': itens,
             }]

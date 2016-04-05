@@ -289,7 +289,7 @@ class AccountInvoice(models.Model):
         return cancelamento['success'], last_event
 
     @api.multi
-    def invoice_print(self):
+    def invoice_print_nfse(self):
         base_nfse = self.env['base.nfse'].create({'invoice_id': self.id,
                                                   'city_code': '6291'})
 
