@@ -56,7 +56,7 @@ class BaseNfse(models.TransientModel):
                 client = self._get_client(url)
                 path = os.path.dirname(os.path.dirname(__file__))
                 xml_send = render(path, 'envio_rps.xml', nfse=nfse)
- 
+
                 xml_send = "<!DOCTYPE ns1:ReqEnvioLoteRPS [<!ATTLIST Lote Id ID #IMPLIED>]>" + \
                     xml_send
 
@@ -373,6 +373,7 @@ class BaseNfse(models.TransientModel):
                         status['message'] = 'Nota emitida com sucesso'
                         status['success'] = True
                         self.invoice_id.internal_number = nota.NumeroNota
+                        self.invoice_id.verify_code = nota.CodigoVerificacao
                         return status
 
         status[

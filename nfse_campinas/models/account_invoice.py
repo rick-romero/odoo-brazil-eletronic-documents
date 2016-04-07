@@ -85,6 +85,8 @@ class AccountInvoice(models.Model):
         u'Lote', size=20, readonly=True, states=FIELD_STATE)
     transaction = fields.Char(u'Transação', size=60,
                               readonly=True, states=FIELD_STATE)
+    verify_code = fields.Char(u'Código Verificação', size=60,
+                              readonly=True, states=FIELD_STATE)
 
     status_send_nfse = fields.Selection(
         [('nao_enviado', 'Não enviado'),

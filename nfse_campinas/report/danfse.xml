@@ -64,21 +64,28 @@
 							<div class="col-xs-2" style="padding:0px;">
 								<div style="border: 1px solid black; padding: 2px;">
 									<t t-if="(inv.state == 'open' or inv.state == 'paid')">
-										Número NFSe
+										<span style="font-size:9px;">Número NFSe</span>
 										<br />
 										<strong t-field="inv.number"></strong>
 									</t>
 									<t t-if="inv.state == 'nfse_ready'">
-										Número RPS
+										<span style="font-size:9px;">Número RPS</span>
 										<br />
 										<strong t-field="inv.internal_number"></strong>
 									</t>
 								</div>
 								<div style="border: 1px solid black; padding: 2px;">
-									Data de Emissão
+									<span style="font-size:9px;">Data de Emissão</span>
 									<br />
-									<strong t-field="inv.date_invoice"></strong>
+									<strong t-field="inv.date_hour_invoice"></strong>
 								</div>
+								<t t-if="(inv.state == 'open' or inv.state == 'paid')">
+									<div style="border: 1px solid black; padding: 2px;">
+										<span style="font-size:8px;">Código de verificação</span>
+										<br />
+										<strong t-field="inv.verify_code"></strong>
+									</div>
+								</t>
 							</div>
 						</div>
 						<div class="row" style="border: 1px solid black; padding: 0 0 5px 5px;">
@@ -165,7 +172,7 @@
 							<span t-field="inv.comment"></span>
 						</div>
 						<div class="row"
-							style="border: 1px solid black;min-height:520px; padding:0;">
+							style="border: 1px solid black;min-height:420px; padding:0;">
 							<table style="width:100%;" border="1">
 								<thead>
 									<tr>
@@ -195,31 +202,31 @@
 						</div>
 						<div class="row" style="border: 1px solid black; padding:0 0 5px 5px;">
 							<div class="col-xs-2" style="width:20%;text-align:center;border">
-								PIS(0,00%):
+								PIS(<span t-field="inv.invoice_line[0].pis_percent" />%):
 								<br />
 								<strong t-field="inv.pis_value"
 									t-field-options='{"widget": "monetary",  "display_currency": "inv.currency_id" }'></strong>
 							</div>
 							<div class="col-xs-2" style="width:20%;text-align:center;">
-								COFINS(0,00%):
+								COFINS(<span t-field="inv.invoice_line[0].cofins_percent" />%):
 								<br />
 								<strong t-field="inv.cofins_value"
 									t-field-options='{"widget": "monetary",  "display_currency": "inv.currency_id" }'></strong>
 							</div>
 							<div class="col-xs-2" style="width:20%;text-align:center;">
-								INSS(0,00%):
+								INSS(<span t-field="inv.invoice_line[0].inss_percent" />%):
 								<br />
 								<strong t-field="inv.inss_value"
 									t-field-options='{"widget": "monetary",  "display_currency": "inv.currency_id" }'></strong>
 							</div>
 							<div class="col-xs-2" style="width:20%;text-align:center;">
-								IR(0,00%):
+								IR(<span t-field="inv.invoice_line[0].ir_percent" />%):
 								<br />
 								<strong t-field="inv.ir_value"
 									t-field-options='{"widget": "monetary",  "display_currency": "inv.currency_id" }'></strong>
 							</div>
 							<div class="col-xs-2" style="width:20%;text-align:center;">
-								CSLL(0,00%):
+								CSLL(<span t-field="inv.invoice_line[0].csll_percent" />%):
 								<br />
 								<strong t-field="inv.csll_value"
 									t-field-options='{"widget": "monetary",  "display_currency": "inv.currency_id" }'></strong>
@@ -240,7 +247,7 @@
 							<div class="col-xs-3" style="text-align:center;">
 								Alíquota:
 								<br />
-								<strong>R$0,00</strong>
+								<strong><span t-field="inv.invoice_line[0].issqn_percent" />%</strong>
 							</div>
 							<div class="col-xs-3" style="text-align:center;">
 								Valor do ISS:
@@ -267,7 +274,32 @@
 							</div>
 						</div>
 						<div class="row"
-							style="border: 1px solid black;min-height:100px; padding:0 0 5px 5px;">
+							style="border: 1px solid black;min-height:170px; padding:0 0 5px 5px;">
+							<div style="text-align:center"><b>Outras informações</b></div>
+							<div style="float:left; width:50%;">
+								Mês de competência da nota fiscal: <span t-field="inv.date_hour_invoice" t-field-options='{"format": "MM/yyyy"}' />
+							</div>
+							<div style="float:left; width:50%;">
+								Local da prestação do Serviço: <span t-field="inv.provider_city_id.name" />/<span t-field="inv.provider_city_id.state_id.code" />
+							</div>
+							<div style="float:left; width:50%;">
+								Recolhimento: <span t-field="inv.type_retention" />
+							</div>
+							<div style="float:left; width:50%;">
+								Tributação: <span t-field="inv.taxation" />
+							</div>
+							<div style="float:left; width:30%;">
+								CNAE: <span t-field="inv.cnae_id.code" />
+							</div>
+							<div style="float:left; width:70%;">
+								Descrição da atividade: <span t-field="inv.cnae_id.name" />
+							</div>
+							<div>
+								Data de vencimento do ISSQN referente à esta NFSe: <span t-field="inv.date_due" t-field-options='{"format": "dd/MM/yyyy"}'  />
+							</div>
+							<div>
+								Serviço: <span t-field="inv.invoice_line[0].service_type_id.code" /> - <span t-field="inv.invoice_line[0].service_type_id.name" />
+							</div>
 							<span t-field="inv.fiscal_comment"></span>
 						</div>
 					</div>
@@ -277,4 +309,3 @@
 
 	</data>
 </openerp>
-
