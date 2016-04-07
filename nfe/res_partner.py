@@ -88,7 +88,6 @@ class ResPartner(orm.Model):
                     'zip': info.get('CEP', ''),
                     'street2': info.get('xCpl', ''),
                     'legal_name': info.get('xNome', ''),
-                    'cnpj_cpf': info.get('CNPJ', ''),
                     'number': info.get('nro', ''),
                     'l10n_br_city_id': city_id,
                     'state_id': state_id,
