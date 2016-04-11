@@ -172,7 +172,7 @@
 							<span t-field="inv.comment"></span>
 						</div>
 						<div class="row"
-							style="border: 1px solid black;min-height:420px; padding:0;">
+							style="border: 1px solid black;min-height:380px; padding:0;">
 							<table style="width:100%;" border="1">
 								<thead>
 									<tr>
@@ -288,10 +288,10 @@
 							<div style="float:left; width:50%;">
 								Tributação: <span t-field="inv.taxation" />
 							</div>
-							<div style="float:left; width:30%;">
+							<div style="float:left; width:25%;">
 								CNAE: <span t-field="inv.cnae_id.code" />
 							</div>
-							<div style="float:left; width:70%;">
+							<div style="float:left; width:75%;">
 								Descrição da atividade: <span t-field="inv.cnae_id.name" />
 							</div>
 							<div>

@@ -53,7 +53,7 @@ class AccountInvoice(models.Model):
                                        readonly=True, default=_default_city,
                                        states=FIELD_STATE)
 
-    type_retention = fields.Selection([('A', u'A Receber'),
+    type_retention = fields.Selection([('A', u'ISS a recolher pelo prestador'),
                                        ('R', u'Retido na Fonte')],
                                       u'Tipo Recolhimento',
                                       readonly=True, default='A',
