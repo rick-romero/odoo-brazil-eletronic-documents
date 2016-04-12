@@ -346,7 +346,7 @@ class BaseNfse(models.TransientModel):
 
         try:
             response = client.service.consultarNota(xml_signed)
-        except Exception as e:
+        except Exception:
             _logger.warning('Erro ao consultar lote', exc_info=True)
             status['message'] = 'Falha de conexão - Verifique a internet'
             return status
@@ -456,7 +456,7 @@ class BaseNfse(models.TransientModel):
             itens = []
             for inv_line in inv.invoice_line:
                 item = {
-                    'descricao': inv_line.product_id.name[:80] or '',
+                    'descricao': inv_line.product_id.name_template[:80] or '',
                     'quantidade': str("%.0f" % inv_line.quantity),
                     'valor_unitario': str("%.2f" % (inv_line.price_unit)),
                     'valor_total': str("%.2f" % (inv_line.quantity * inv_line.price_unit)),
