@@ -66,12 +66,12 @@
 									<t t-if="(inv.state == 'open' or inv.state == 'paid')">
 										<span style="font-size:9px;">Número NFSe</span>
 										<br />
-										<strong t-field="inv.number"></strong>
+										<strong t-field="inv.internal_number"></strong>
 									</t>
 									<t t-if="inv.state == 'nfse_ready'">
 										<span style="font-size:9px;">Número RPS</span>
 										<br />
-										<strong t-field="inv.internal_number"></strong>
+										<strong t-field="inv.number"></strong>
 									</t>
 								</div>
 								<div style="border: 1px solid black; padding: 2px;">
