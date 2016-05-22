@@ -73,6 +73,8 @@ def check_partner(company, cnpj_cpf, estado=None, ie=None):
     if not estado:
         estado = company.partner_id.state_id.code
     p.estado = estado
+    #cnpj_cpf = re.sub(r'/', '', cnpj_cpf)
+    #cnpj_cpf = re.sub('\.(?!(\S[^. ])|\d)', '', cnpj_cpf)
     cnpj_cpf = (
         re.sub(
             '[%s]' %
@@ -81,7 +83,9 @@ def check_partner(company, cnpj_cpf, estado=None, ie=None):
             '',
             cnpj_cpf or ''))
     if ie and ie.lower() != 'isento':
-        ie = (re.sub('[%]' % re.scape(string.punctuation), '', ie or ''))
+        ie = re.sub('\.(?!(\S[^. ])|\d)', '', ie)
+        #ie = (re.sub('[%]' % re.escape(string.punctuation), '', ie or ''))
+    
     return p.consultar_cadastro(estado, ie, cnpj_cpf)
 
 
