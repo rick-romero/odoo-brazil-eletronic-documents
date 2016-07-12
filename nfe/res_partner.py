@@ -74,6 +74,10 @@ class ResPartner(orm.Model):
                                         info.get('xMotivo', '')))
 
                 city_id = state_id = None
+                fiscal_type = 0
+                
+                if "SIMPLES NACIONAL" in info.get('xRegApur', ''):
+                    fiscal_type = 3
 
                 if "cMun" in info:
                     city_id = self.pool.get('l10n_br_base.city').search(
@@ -82,10 +86,14 @@ class ResPartner(orm.Model):
                         cr, uid, [('ibge_code', '=', info['cMun'][:2]),
                                   ('country_id.code', '=', 'BR')])[0]
 
+                
+                
                 result = {
                     'district': info.get('xBairro', ''),
                     'street': info.get('xLgr', ''),
                     'zip': info.get('CEP', ''),
+                    'inscr_est' : info.get('IE', ''),
+                    'partner_fiscal_type_id' : fiscal_type,
                     'street2': info.get('xCpl', ''),
                     'legal_name': info.get('xNome', ''),
                     'number': info.get('nro', ''),
